@@ -17,8 +17,8 @@ colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # Swith to Nvidia GPU if opencv is compiled with CUDA backend
 # Might be changed to OpenCL if necessarry, it is much slower though
-net.setPreferableBackend(cv2.dnn.DNN_BACKEND_DEFAULT)
-net.setPreferableTarget(cv2.dnn.DNN_TARGET_OPENCL)
+net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
 layer_names = net.getLayerNames()
 output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
