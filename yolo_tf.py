@@ -456,7 +456,7 @@ class Predictor:
         if self.silent == False:
             cv2.imshow("Output result", img)
             while True:
-                key = cv2.waitKey(0) & 0xFF
+                key = cv2.waitKey(1) & 0xFF
                 if key == 27: break
             cv2.destroyWindow("Output result")
         
@@ -468,7 +468,7 @@ class Predictor:
     def detect_in_video(self, cap, output_file = None):
         if output_file != None:
             fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-            output = cv2.VideoWriter(output_file, fourcc, 24.0, (1280, 720))
+            output = cv2.VideoWriter(output_file, fourcc, 30.0, (1280, 720))
         
         font = cv2.FONT_HERSHEY_SIMPLEX
         start_time = time.time()
