@@ -28,7 +28,7 @@ I beware you that some functions were specifically designed to work with NVidia 
 - argparse
 ## Usage:
 First of all you have to make sure that you have all requirements installed by running
-	`pip install requrements.txt`
+    `pip install requrements.txt`
 Note, that the installation of python, CUDA and cuDNN is user's responsibility.
 
 Next, make sure that you have the following files:
@@ -53,5 +53,5 @@ If you're experiencing some troubles with git LFS and/or somehow cannot get thes
     [yolo_coco/yolov3.weights](https://pjreddie.com/media/files/yolov3.weights)
 
 Finally, run the command below with your own video example
-	`python main.py --video /videos/test.avi --silent=True`
+    `python main.py --video /videos/test.avi --silent=True`
 Once the execution ends you'll get the outputs and statistics in the `./output` folder
