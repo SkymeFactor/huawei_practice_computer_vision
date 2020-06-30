@@ -30,6 +30,7 @@ I beware you that some functions were specifically designed to work with NVidia 
 First of all you have to make sure that you have all requirements installed by running
 
 `pip install requrements.txt`
+
 Note, that the installation of python, CUDA and cuDNN is user's responsibility.
 
 Next, make sure that you have the following files:
@@ -47,6 +48,7 @@ Next, make sure that you have the following files:
 	└── yolov3.weights
 ```
 If you're experiencing some troubles with git LFS and/or somehow cannot get these files you may download them directly by following links:
+
 [mobileSSD](https://github.com/djmv/MobilNet_SSD_opencv)
 
 [yolo_ALPR](https://www.kaggle.com/achrafkhazri/yolo-weights-for-licence-plate-detector)
@@ -58,4 +60,5 @@ If you're experiencing some troubles with git LFS and/or somehow cannot get thes
 Finally, run the command below with your own video example
 
 `python main.py --video /videos/test.avi --silent=True`
+
 Once the execution ends you'll get the outputs and statistics in the `./output` folder
