@@ -20,16 +20,13 @@ I beware you that some functions were specifically designed to work with NVidia 
 - Tensorflow-gpu >=2.2
 - Nvidia CUDA toolkit >=10.0
 - cuDNN >=7.0
-- PyTorch >=1.4
 - OpenCV >=4.0
 - Numpy
-- Time
-- csv
 - argparse
 ## Usage:
 First of all you have to make sure that you have all requirements installed by running
 
-`pip install requrements.txt`
+`pip install -r requirements.txt`
 
 Note, that the installation of python, CUDA and cuDNN is user's responsibility.
 
