@@ -4,7 +4,7 @@
 Computer vision using `opencv` and fast object detectors e.g. yolo, ssd etc.
 
 The purpose of this practice is to observe how different object detectors behave when different hindrances are being applied such as noise, blur etc. comparing to original video with no effects and gather statistics of their work-process.
-#### Statistics CSV file structure example:
+#### Statistics in CSV file, structure example:
 | frame |  x0  |  y0  |  x1  |  y1  | class | confidence | frame time |
 |-------|------|------|------|------|-------|------------|------------|
 |  657  | 0.49 | 0.62 | 0.52 | 0.69 |  3.0  |   0.6292   |   0.0501   |
