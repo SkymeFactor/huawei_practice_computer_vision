@@ -23,7 +23,6 @@ def write_csv(filename, boxes, scores, classes, times):
 
 
 def apply_gaussian_blur(cap, output_file, kernel, sigma, silent=True):
-    #cap = cv2.VideoCapture(source)
     _, img = cap.read()
     fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
     output = cv2.VideoWriter(output_file, fourcc, 30.0, (img.shape[1], img.shape[0]))
@@ -40,13 +39,11 @@ def apply_gaussian_blur(cap, output_file, kernel, sigma, silent=True):
         if key == 27: break
     if silent == False:
         cv2.destroyWindow("Output_blur")
-    #cap.release()
     output.release()
 
 
 def apply_noise(cap, output_file, mean, stddev, silent=True):
     _, img = cap.read()
-    #cap = cv2.VideoCapture(source)
     
     fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
     output = cv2.VideoWriter(output_file, fourcc, 30.0, (img.shape[1], img.shape[0]))
@@ -65,7 +62,6 @@ def apply_noise(cap, output_file, mean, stddev, silent=True):
         if key == 27: break
     if silent == False:
         cv2.destroyWindow("Output_noise")
-    #cap.release()
     output.release()
 
 
@@ -75,16 +71,7 @@ class Predictors:
         for p in preds:
             self.preds.append(p)
     
-    def obtain_filename(self, source):
-        
-        # supported_images = ["bmp", "dib", "jpeg", "jpg", "jpe", "jp2", "png",
-        #    "pbm", "pgm", "ppm", "sr", "ras", "tiff", "tif"]
-        #ext = (args.video.split("."))[-1]
-        #self.mode = "video"
-        #
-        #for i in supported_images:
-        #    if ext == i: self.mode = "image"
-        
+    def obtain_filename(self, source):        
         return (args.video.split("/"))[-1].split(".")[0]
 
     def iterate_through_all(self, source):
@@ -134,30 +121,4 @@ if __name__ == "__main__":
     # Perform the iteration process with video file
     pred.iterate_through_all(args.video)
 
-    # Define the output filename
-    #out_filename = (args.video.split("/"))[-1].split(".")[0]
     
-    #
-    #for p in predictors:
-    #    p.detect_in_image(cv2.imread("/home/skyme/Downloads/ANPR-master/Licence_plate_detection/test.jpg"))
-
-    #apply_noise("videos/16.mp4", "videos/16_noise.mp4 ", 5, 50, False)
-
-    #make_gaussian_blur(args.video, "videos/16_gaussian_blur.avi", (5, 5), 1)
-    
-    #
-
-    #boxes, scores, classes, times = pred_alpr.detect_in_image(cv2.imread("/home/skyme/Downloads/ANPR-master/Licence_plate_detection/test.jpg"))
-    #write_csv("new_test.csv", boxes, scores, classes, times)
-    #print(pred.detect_in_image(cv2.imread("test.jpg")))
-    '''
-    cap = cv2.VideoCapture(args.video)
-    boxes, scores, classes, times = pred_alpr.detect_in_video(cap, "output/16.avi")
-    write_csv("16.csv", boxes, scores, classes, times)
-    cap.release()
-    
-    cap = cv2.VideoCapture("videos/test_gaussian_blur.avi")
-    boxes, scores, classes, times = pred.detect_in_video(cap, "output/test_YOLO_tf_gaussian_blur.avi")
-    write_csv("test_gaussian.csv", boxes, scores, classes, times)
-    cap.release()
-    '''
