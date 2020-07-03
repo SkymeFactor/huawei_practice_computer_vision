@@ -165,5 +165,7 @@ class Predictor:
                     output.release()
                 cv2.destroyAllWindows()
                 break
+        
+        cv2.destroyWindow("SSD output")
 
         return vid_boxes, vid_scores, vid_classes, vid_times

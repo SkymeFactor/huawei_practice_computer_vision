@@ -197,4 +197,6 @@ class Predictor:
                 cv2.destroyAllWindows()
                 break
         
+        cv2.destroyWindow("ALPR output")
+
         return vid_boxes, vid_scores, vid_classes, vid_times
