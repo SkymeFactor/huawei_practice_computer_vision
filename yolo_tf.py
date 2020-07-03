@@ -2,8 +2,6 @@ from cv2 import cv2
 import tensorflow as tf
 import numpy as np
 import time
-#from absl import logging
-#from itertools import repeat
 
 yolo_iou_threshold = 0.6  # iou threshold
 yolo_score_threshold = 0.6  # score threshold
@@ -49,9 +47,6 @@ def load_darknet_weights(model, weights_file):
             if i + 1 < len(sub_model.layers) and \
                     sub_model.layers[i + 1].name.startswith('batch_norm'):
                 batch_norm = sub_model.layers[i + 1]
-
-            #logging.info("{}/{} {}".format(
-            #    sub_model.name, layer.name, 'bn' if batch_norm else 'bias'))
 
             filters = layer.filters
             size = layer.kernel_size[0]
@@ -291,57 +286,6 @@ def YoloV3(size=None, channels=3, anchors=yolo_anchors,
 
     return tf.keras.Model(inputs, outputs, name='yolov3')
 
-# Useless function unless we want to train our model (we don't)
-'''
-def YoloLoss(anchors, classes=80, ignore_thresh=0.5):
-    def yolo_loss(y_true, y_pred):
-        pred_box, pred_obj, pred_class, pred_xywh = yolo_boxes(
-            y_pred, anchors, classes)
-        pred_xy = pred_xywh[..., 0:2]
-        pred_wh = pred_xywh[..., 2:4]
-
-        true_box, true_obj, true_class_idx = tf.split(
-            y_true, (4, 1, 1), axis=-1)
-        true_xy = (true_box[..., 0:2] + true_box[..., 2:4]) / 2
-        true_wh = true_box[..., 2:4] - true_box[..., 0:2]
-
-        box_loss_scale = 2 - true_wh[..., 0] * true_wh[..., 1]
-
-        grid_size = tf.shape(y_true)[1]
-        grid = tf.meshgrid(tf.range(grid_size), tf.range(grid_size))
-        grid = tf.expand_dims(tf.stack(grid, axis=-1), axis=2)
-        true_xy = true_xy * tf.cast(grid_size, tf.float32) - \
-            tf.cast(grid, tf.float32)
-        true_wh = tf.math.log(true_wh / anchors)
-        true_wh = tf.where(tf.math.is_inf(true_wh),
-                           tf.zeros_like(true_wh), true_wh)
-
-        obj_mask = tf.squeeze(true_obj, -1)
-        # ignore when Intersection Over Union is over threshold
-        true_box_flat = tf.boolean_mask(true_box, tf.cast(obj_mask, tf.bool))
-        best_iou = tf.reduce_max(intersectionOverUnion(
-            pred_box, true_box_flat), axis=-1)
-        ignore_mask = tf.cast(best_iou < ignore_thresh, tf.float32)
-
-        xy_loss = obj_mask * box_loss_scale * \
-            tf.reduce_sum(tf.square(true_xy - pred_xy), axis=-1)
-        wh_loss = obj_mask * box_loss_scale * \
-            tf.reduce_sum(tf.square(true_wh - pred_wh), axis=-1)
-        obj_loss = tf.keras.losses.binary_crossentropy(true_obj, pred_obj)
-        obj_loss = obj_mask * obj_loss + \
-            (1 - obj_mask) * ignore_mask * obj_loss
-
-        class_loss = obj_mask * tf.keras.losses.sparse_categorical_crossentropy(
-            true_class_idx, pred_class)
-
-        xy_loss = tf.reduce_sum(xy_loss, axis=(1, 2, 3))
-        wh_loss = tf.reduce_sum(wh_loss, axis=(1, 2, 3))
-        obj_loss = tf.reduce_sum(obj_loss, axis=(1, 2, 3))
-        class_loss = tf.reduce_sum(class_loss, axis=(1, 2, 3))
-
-        return xy_loss + wh_loss + obj_loss + class_loss
-    return yolo_loss
-'''
 
 @tf.function
 def transform_targets_for_output(y_true, grid_size, anchor_idxs, classes):
@@ -421,18 +365,22 @@ class Predictor:
         load_darknet_weights(self.yolo, weightsyolov3)
         colors = np.random.uniform(0, 255, size=(len(class_names), 3))
    
+
     def __del__(self):
         tf.keras.backend.clear_session()
         cv2.destroyAllWindows()
     
+
     def prepare_gpu(self):
         physical_devices = tf.config.experimental.list_physical_devices('GPU')
         assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
         _config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
     
+
     def set_silent_mode(self, silent):
         self.silent = silent
     
+
     def detect_in_image(self, img, output_file=None):
         font = cv2.FONT_HERSHEY_SIMPLEX
         assert type(img) == np.ndarray, "Predictor.detect_in_image(self, img): img must be an ndarray"
@@ -465,6 +413,7 @@ class Predictor:
 
         return [boxes[0, :nums[0]]], [scores[0, :nums[0]]], [classes[0, :nums[0]]], times
 
+    
     def detect_in_video(self, cap, output_file = None):
         if output_file != None:
             fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
@@ -526,93 +475,3 @@ class Predictor:
                 cv2.destroyAllWindows()
                 break
         return vid_boxes, vid_scores, vid_classes, vid_times
-
-
-
-
-
-
-
-
-# The old version, I've kept it just in case =)
-'''
-def detect_in_video(source=cv2.VideoCapture("videos/test.avi"), output_name = "output/test_YOLO_tf.avi", silent = False):
-
-    Predictor.prepare_gpu(Predictor)
-
-    yolo = YoloV3(classes=num_classes)
-
-    load_darknet_weights(yolo, weightsyolov3)
-
-    # yolo.save_weights(checkpoints)
-
-    
-    colors = np.random.uniform(0, 255, size=(len(class_names), 3))
-
-    #name = 'test.jpg'
-    cap = source #cv2.VideoCapture(input_name)
-    fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-    if output_name != None:
-        output = cv2.VideoWriter(output_name, fourcc, 24.0, (1280, 720))
-
-    ###################################################################################################
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    start_time = time.time()
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    frame_id = 0
-    times = []
-
-    while True:
-        frame_id += 1
-        _, img = cap.read()  # tf.image.decode_image(open(name, 'rb').read(), channels=3)
-        if type(img) != np.ndarray:
-            break
-        frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        frame = tf.expand_dims(frame, 0)
-        frame = preprocess_image(frame, size)
-
-        t1 = time.time()
-        boxes, scores, classes, nums = yolo.predict(frame)  # eager mode
-        t2 = time.time()
-        times.append(t2-t1)
-        times = times[-20:]
-
-        #img = cv2.imread(name)
-
-        img = draw_outputs(img, (boxes, scores, classes, nums), class_names, colors)
-
-        elapsed_time = time.time() - start_time
-        fps = frame_id / elapsed_time
-        # Draw the text twice in order to make an outline.
-        # FPS counter
-        cv2.putText(img, "FPS: " + str(round(fps, 2)),
-                    (10, 100), font, 1, (0, 0, 0), 4)
-        cv2.putText(img, "FPS: " + str(round(fps, 2)),
-                    (10, 100), font, 1, (255, 255, 255), 2)
-        # Time per frame in ms
-        cv2.putText(img, "Time: " + str(round(sum(times)/len(times)*1000, 2)) +" ms", (10, 30),
-                        font, 1, (0, 0, 0), 4)
-        cv2.putText(img, "Time: " + str(round(sum(times)/len(times)*1000, 2)) +" ms", (10, 30),
-                        font, 1, (255, 255, 255), 2)
-        img = cv2.resize(img, (1280, 720))
-        if output_name != None:
-            output.write(img)
-
-        if silent == False:
-            cv2.imshow("Output result", img)
-
-        key = cv2.waitKey(1)
-        if key == 27:
-            break
-    ###################################################################################################
-
-    tf.keras.backend.clear_session()
-    cap.release()
-    if output_name != None:
-        output.release()
-    cv2.destroyAllWindows()
-
-# Test functions, must be deleted later
-#prepare_gpu()
-#detect_in_video()
-'''
