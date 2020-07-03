@@ -73,11 +73,11 @@ class Predictor:
         img = cv2.resize(img, (1280, 720))
 
         if self.silent == False:
-            cv2.imshow("Output result", img)
+            cv2.imshow("Output image SSD", img)
             while True:
                 key = cv2.waitKey(1) & 0xFF
                 if key == 27: break
-            cv2.destroyWindow("Output result")
+            cv2.destroyWindow("Output image SSD")
         
         if output_file != None:
             cv2.imwrite(output_file, img)
