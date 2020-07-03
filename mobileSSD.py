@@ -1,88 +1,168 @@
 from cv2 import cv2
 import numpy as np
 import time
-import argparse
 
-# construct the argument parse 
-parser = argparse.ArgumentParser(
-    description='Script to run MobileNet-SSD object detection network')
-parser.add_argument("--prototxt", default="mobileSSD/MobileNetSSD_deploy.prototxt")
-parser.add_argument("--weights", default="mobileSSD/MobileNetSSD_deploy.caffemodel")
-parser.add_argument("--thr", default=0.3, type=float)
-args = parser.parse_args()
+#Load the Caffe model
+prototxt = "mobileSSD/MobileNetSSD_deploy.prototxt"
+weights = "mobileSSD/MobileNetSSD_deploy.caffemodel"
 
-#Load the Caffe model 
-net = cv2.dnn.readNetFromCaffe(args.prototxt, args.weights)
+
 # Labels of Network.
-classes = [ 'background', 'aeroplane', 'bicycle', 'bird', 'boat',
+class_names = [ 'background', 'aeroplane', 'bicycle', 'bird', 'boat',
     'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog',
     'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa',
     'train', 'tvmonitor' ]
-colors = np.random.uniform(0, 255, size=(len(classes), 3))
+colors = []
 
-# Swith to Nvidia GPU if opencv is compiled with CUDA backend
-# Might be changed to OpenCL if necessarry, it is much slower though
-net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-# Load the video capture <<<--------------------------------------------------------
-cap = cv2.VideoCapture("videos/test.avi")
-fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
-output = cv2.VideoWriter("output/test_SSD.avi", fourcc, 24.0, (1280, 720))
-#img = cv2.imread("test.jpg")
-#img = cv2.resize(img, None, fx=0.8, fy=0.8)
-font = cv2.FONT_HERSHEY_SIMPLEX
-start_time = time.time()
-frame_id = 0
-
-while True:
-    _, img = cap.read()
-    frame_id += 1
-    if type(img) == np.ndarray:
-        height, width, channels = img.shape
-    else:
-        break
-
-    blob = cv2.dnn.blobFromImage(img, 0.007843, (512, 512), (127.5, 127.5, 127.5), crop=False)
-    net.setInput(blob)
-    detections = net.forward()
-
-    class_ids = []
-    confidences = []
-    boxes = []
-    for i in range(detections.shape[2]):
-        confidence = detections[0, 0, i, 2]
-        class_id = int(detections[0, 0, i, 1])
-        if confidence > args.thr:
-            box = detections[0, 0, i, 3:7] * np.array([width, height, width, height])
-            box -= [0, 0, box[0], box[1]]
-            boxes.append(box.astype("int"))
-            confidences.append(confidence)
-            class_ids.append(class_id)
-        
-    #indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.2, 0.4)
-
-    for i in range(len(boxes)):
-        #if i in indices:
-        x, y, w, h = boxes[i]
-        label = str(classes[class_ids[i]]) + " " + str(round(confidences[i], 2))
-        color = colors[class_ids[i]]
-        cv2.rectangle(img, (x, y), (x + w, y + h), color, 2)
-        cv2.putText(img, label, (x + 5, y + 25), font, 1, color, 2)
-    elapsed_time = time.time() - start_time
-    fps = frame_id / elapsed_time
-    cv2.putText(img, "FPS: " + str(round(fps, 2)), (10, 50), font, 1, (255, 255, 255), 3)
-    img = cv2.resize(img, (1280, 720))
-    output.write(img)
+class Predictor:
+    def __init__(self, silent=False, threshold=0.3, backend=cv2.dnn.DNN_BACKEND_DEFAULT, target=cv2.dnn.DNN_TARGET_CPU):
+        global colors
+        self.silent = silent
+        self.net = cv2.dnn.readNetFromCaffe(prototxt, weights)
+        self.net.setPreferableBackend(backend)
+        self.net.setPreferableTarget(target)
+        self.threshold = threshold
+        colors = np.random.uniform(0, 255, size=(len(class_names), 3))
     
-    # Uncomment in order to see the output on your screen,
-    # otherwise it will be running in silent mode
-    #cv2.imshow("Output result", img) # <-----------------
 
-    key = cv2.waitKey(1)
-    if key == 27:
-        break
+    def __del__(self):
+        cv2.destroyAllWindows()
+    
 
-cap.release()
-output.release()
-cv2.destroyAllWindows()
+    def set_silent_mode(self, silent):
+        self.silent = silent
+    
+
+    def detect_in_image(self, img, output_file=None):
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        assert type(img) == np.ndarray, "Predictor.detect_in_image(self, img): img must be an ndarray"
+        height, width, _channels = img.shape
+
+        blob = cv2.dnn.blobFromImage(img, 0.007843, (512, 512), (127.5, 127.5, 127.5), 1, crop=False)
+        self.net.setInput(blob)
+        classes = []
+        scores = []
+        boxes = []
+
+        t1 = time.time()
+        # Making the prediction of a frame
+        detections = self.net.forward()
+
+        for i in range(detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
+            class_id = int(detections[0, 0, i, 1])
+            if confidence > self.threshold:
+                box = detections[0, 0, i, 3:7]
+                boxes.append(box)
+                scores.append(confidence)
+                classes.append(class_id)
+        t2 = time.time()
+        times = [t2 - t1]
+
+        for i in range(len(boxes)):
+            x1, y1, x2, y2 = (boxes[i] * np.array([width, height, width, height])).astype("int")
+            label = str(class_names[classes[i]]) + " " + str(round(scores[i], 2))
+            color = colors[classes[i]]
+            cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(img, label, (x1 + 5, y1 + 25), font, 1, color, 2)
+        cv2.putText(img, "Time: " + str(round(sum(times)/len(times)*1000, 2)) +" ms", (10, 30),
+                        font, 1, (0, 0, 0), 4)
+        cv2.putText(img, "Time: " + str(round(sum(times)/len(times)*1000, 2)) +" ms", (10, 30),
+                        font, 1, (255, 255, 255), 2)
+        img = cv2.resize(img, (1280, 720))
+
+        if self.silent == False:
+            cv2.imshow("Output result", img)
+            while True:
+                key = cv2.waitKey(1) & 0xFF
+                if key == 27: break
+            cv2.destroyWindow("Output result")
+        
+        if output_file != None:
+            cv2.imwrite(output_file, img)
+
+        return [boxes], [scores], [classes], times
+    
+
+    def detect_in_video(self, cap, output_file = None):
+        if output_file != None:
+            fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
+            output = cv2.VideoWriter(output_file, fourcc, 30.0, (1280, 720))
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        start_time = time.time()
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        frame_id = 0
+        vid_boxes, vid_scores, vid_classes, vid_times = [], [], [], []
+        times = []
+
+        while True:
+            frame_id += 1
+            _, img = cap.read()
+            if type(img) == np.ndarray:
+                height, width, _channels = img.shape
+            else: break
+
+            blob = cv2.dnn.blobFromImage(img, 0.007843, (512, 512), (127.5, 127.5, 127.5), 1, crop=False)
+            self.net.setInput(blob)
+            classes = []
+            scores = []
+            boxes = []
+            
+            t1 = time.time()
+            # Making the prediction of a frame
+            detections = self.net.forward()
+
+            for i in range(detections.shape[2]):
+                confidence = detections[0, 0, i, 2]
+                class_id = int(detections[0, 0, i, 1])
+                if confidence > self.threshold:
+                    box = detections[0, 0, i, 3:7]
+                    boxes.append(box)
+                    scores.append(confidence)
+                    classes.append(class_id)
+            t2 = time.time()
+            times.append(t2-t1)
+            times = times[-20:]
+
+            vid_boxes.append(boxes)
+            vid_scores.append(scores)
+            vid_classes.append([float(i) for i in classes])
+            vid_times.append(times[-1])
+            
+            for i in range(len(boxes)):
+                x1, y1, x2, y2 = (boxes[i] * np.array([width, height, width, height])).astype("int")
+                label = str(class_names[classes[i]]) + " " + str(round(scores[i], 2))
+                color = colors[classes[i]]
+                cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(img, label, (x1 + 5, y1 + 25), font, 1, color, 2)
+            elapsed_time = time.time() - start_time
+            fps = frame_id / elapsed_time
+            # Draw the text twice in order to make an outline.
+            # FPS counter
+            cv2.putText(img, "FPS: " + str(round(fps, 2)),
+                        (10, 100), font, 1, (0, 0, 0), 4)
+            cv2.putText(img, "FPS: " + str(round(fps, 2)),
+                        (10, 100), font, 1, (255, 255, 255), 2)
+            # Time per frame in ms
+            cv2.putText(img, "Time: " + str(round(sum(times)/len(times)*1000, 2)) +" ms", (10, 30),
+                            font, 1, (0, 0, 0), 4)
+            cv2.putText(img, "Time: " + str(round(sum(times)/len(times)*1000, 2)) +" ms", (10, 30),
+                            font, 1, (255, 255, 255), 2)
+            img = cv2.resize(img, (1280, 720))
+            
+            if output_file != None:
+                output.write(img)
+            
+            if self.silent == False:
+                cv2.imshow("SSD output", img)
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == 27:
+                if output_file != None:
+                    output.release()
+                cv2.destroyAllWindows()
+                break
+
+        return vid_boxes, vid_scores, vid_classes, vid_times
