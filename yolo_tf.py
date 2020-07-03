@@ -357,6 +357,7 @@ def preprocess_image(x_train, size):
 
 class Predictor:
     def __init__(self, silent = False):
+        self.__name__ = "YOLO"
         # Set the global reference to colors to be able to change it
         global colors
         self.silent = silent

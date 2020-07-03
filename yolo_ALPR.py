@@ -27,6 +27,7 @@ def getOutputsNames(net):
 
 class Predictor:
     def __init__(self, silent, backend=cv2.dnn.DNN_BACKEND_DEFAULT, target=cv2.dnn.DNN_TARGET_CPU):
+        self.__name__ = "ALPR"
         global colors
         self.silent = silent
         self.net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)

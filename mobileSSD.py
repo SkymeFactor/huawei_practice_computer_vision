@@ -17,6 +17,7 @@ colors = []
 
 class Predictor:
     def __init__(self, silent=False, threshold=0.3, backend=cv2.dnn.DNN_BACKEND_DEFAULT, target=cv2.dnn.DNN_TARGET_CPU):
+        self.__name__ = "SSD"
         global colors
         self.silent = silent
         self.net = cv2.dnn.readNetFromCaffe(prototxt, weights)
