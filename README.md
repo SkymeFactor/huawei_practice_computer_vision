@@ -30,14 +30,13 @@ First of all you have to make sure that you have all requirements installed by r
 
 Note, that the installation of python, CUDA and cuDNN is user's responsibility.
 
-Next, make sure that you have the following files:
+Next, make sure that you have the following essential files:
 ```
 .
 ├── mobileSSD
 │ 	├── MobileNetSSD_deploy.caffemodel
 │ 	└── MobileNetSSD_deploy.prototxt
 ├── yolo_ALPR
-│ 	├── classes.names
 │ 	├── darknet-yolov3.cfg
 │ 	├── lapi.weights
 └── yolo_coco
@@ -59,3 +58,17 @@ Finally, run the command below with your own video example
 `python main.py --video /videos/test.avi --silent=True`
 
 Once the execution ends you'll get the outputs and statistics in the `./output` folder
+
+## Hindrances being used:
+
+In this certain work I have used only two filters: noise and blur with different parameters.
+#### Parameters:
+- Kernel size for gaussian blur
+- Sigma for gaussian blur
+- Mean for random distribution of noise
+- Standard Deviation for random distribution of noise
+Specific parameters for everything except kernels were [1, 5, 15, 50] while kernels were [(1,1), (3,3), (5,5), (9,9)]. Parameters have been picked up by greedy iterationing over them all.
+
+## File naming specific:
+
+Example: `Network_filename_kernelSize_sigma_mean_standardDeviation.avi` which is stored in the `output/filename/` directory.
