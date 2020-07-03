@@ -463,7 +463,7 @@ class Predictor:
         if output_file != None:
             cv2.imwrite(output_file, img)
 
-        return boxes[0, :nums[0]], scores[0, :nums[0]], classes[0, :nums[0]], times[0]
+        return [boxes[0, :nums[0]]], [scores[0, :nums[0]]], [classes[0, :nums[0]]], times
 
     def detect_in_video(self, cap, output_file = None):
         if output_file != None:
@@ -517,7 +517,7 @@ class Predictor:
                 output.write(img)
 
             if self.silent == False:
-                cv2.imshow("Output result", img)
+                cv2.imshow("YOLO TF output", img)
 
             key = cv2.waitKey(1) & 0xFF
             if key == 27:
