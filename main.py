@@ -82,7 +82,7 @@ class Predictors:
         except Exception:
             pass
             
-        
+        # Hardcode alert, has to be fixed!!!
         for ker in kernels:
             for sig in sigmas:
                 for mn in means:
