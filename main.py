@@ -22,13 +22,14 @@ def write_csv(filename, boxes, scores, classes, times):
                 writer.writerow((i, boxes[i][j], classes[i][j], scores[i][j], times[i]))
 
 
-def apply_gaussian_blur(cap, output_file, kernel, sigma, silent=True):
+def apply_gaussian_blur(cap, output_file, kernel, sigma, silent=True, where_from=0, where_to=-1):
+    cap.set(cv2.CAP_PROP_POS_FRAMES, where_from)
     _, img = cap.read()
     fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
     output = cv2.VideoWriter(output_file, fourcc, 30.0, (img.shape[1], img.shape[0]))
     while True:
-        if type(img) == type(None):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        if type(img) == type(None) or cap.get(cv2.CAP_PROP_POS_FRAMES) == where_to:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, where_from)
             break
         img = cv2.GaussianBlur(img, kernel, sigma)
         if silent == False:
@@ -42,14 +43,15 @@ def apply_gaussian_blur(cap, output_file, kernel, sigma, silent=True):
     output.release()
 
 
-def apply_noise(cap, output_file, mean, stddev, silent=True):
+def apply_noise(cap, output_file, mean, stddev, silent=True, where_from=0, where_to=-1):
+    cap.set(cv2.CAP_PROP_POS_FRAMES, where_from)
     _, img = cap.read()
     
     fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
     output = cv2.VideoWriter(output_file, fourcc, 30.0, (img.shape[1], img.shape[0]))
     while True:
-        if type(img) == type(None):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        if type(img) == type(None) or cap.get(cv2.CAP_PROP_POS_FRAMES) == where_to:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, where_from)
             break
         dst = np.empty_like(img)
         noise = cv2.randn(dst, mean, stddev)
@@ -74,7 +76,7 @@ class Predictors:
     def obtain_filename(self, source):        
         return (args.video.split("/"))[-1].split(".")[0]
 
-    def iterate_through_all(self, source):
+    def iterate_through_all(self, source, start_position=0, end_position=-1):
         cap = cv2.VideoCapture(source)
         filename = self.obtain_filename(source)
         try:
@@ -87,7 +89,7 @@ class Predictors:
             for sig in sigmas:
                 for mn in means:
                     for stdd in stddevs:
-                        apply_gaussian_blur(cap, "videos/_" + filename + "_temp.avi",ker, sig)
+                        apply_gaussian_blur(cap, "videos/_" + filename + "_temp.avi",ker, sig, where_from=start_position, where_to=end_position)
                         temp = cv2.VideoCapture("videos/_" + filename + "_temp.avi")
                         apply_noise(temp, "videos/__" + filename + "_temp.avi", mn, stdd)
                         temp.release()
