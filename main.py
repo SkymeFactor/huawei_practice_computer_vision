@@ -8,10 +8,10 @@ from mobileSSD import Predictor as ssd_pred
 from yolo_ALPR import Predictor as alpr_pred
 
 
-kernels = [(1, 1), (3, 3), (5, 5), (9, 9)]
-sigmas = [1, 5, 15, 50]
-means = [1, 5, 15, 50]
-stddevs = [1, 5, 15, 50]
+kernels = [(1, 1)]
+sigmas = [1]
+means = [1]
+stddevs = [1]
 
 
 def write_csv(filename, boxes, scores, classes, times):
@@ -111,13 +111,14 @@ if __name__ == "__main__":
     parser.add_argument("--video", default="videos/test.avi", help="Path to video file")
     parser.add_argument("--silent", default=True, type=lambda silent: False if (silent == "False" or silent == "false") else True,
         help="True by default, False to set visible mode")
+    parser.add_argument("--use-cpu", dest="is_cpu_backend", action="store_const", const=True, default=False, help="forces to use your cpu as a backend")
     args = parser.parse_args()
     
     
     # Create a bunch of predictors from different networks to iterate through them
-    pred = Predictors(yolo_pred(silent=args.silent),
-        ssd_pred(silent=args.silent, backend=cv2.dnn.DNN_BACKEND_VKCOM, target=cv2.dnn.DNN_TARGET_VULKAN),
-        alpr_pred(silent=args.silent, backend=cv2.dnn.DNN_BACKEND_DEFAULT, target=cv2.dnn.DNN_TARGET_CPU) )
+    pred = Predictors(yolo_pred(silent=args.silent, backend_type_cpu=args.is_cpu_backend))
+        #ssd_pred(silent=args.silent, backend=cv2.dnn.DNN_BACKEND_VKCOM, target=cv2.dnn.DNN_TARGET_VULKAN),
+        #alpr_pred(silent=args.silent, backend=cv2.dnn.DNN_BACKEND_DEFAULT, target=cv2.dnn.DNN_TARGET_CPU) )
     # Perform the iteration process with video file
     pred.iterate_through_all(args.video)
 

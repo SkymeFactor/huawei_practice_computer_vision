@@ -356,12 +356,12 @@ def preprocess_image(x_train, size):
 
 
 class Predictor:
-    def __init__(self, silent = False):
+    def __init__(self, silent = False, backend_type_cpu = False):
         self.__name__ = "YOLO"
         # Set the global reference to colors to be able to change it
         global colors
         self.silent = silent
-        self.prepare_gpu()
+        self.prepare_backend(backend_type_cpu)
         self.yolo = YoloV3(classes=num_classes)
         load_darknet_weights(self.yolo, weightsyolov3)
         colors = np.random.uniform(0, 255, size=(len(class_names), 3))
@@ -372,10 +372,13 @@ class Predictor:
         cv2.destroyAllWindows()
     
 
-    def prepare_gpu(self):
-        physical_devices = tf.config.experimental.list_physical_devices('GPU')
-        assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
-        _config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
+    def prepare_backend(self, backend_type_cpu):
+        if backend_type_cpu:
+            tf.config.experimental.set_visible_devices(tf.config.experimental.list_physical_devices("CPU"))
+        else:
+            physical_devices = tf.config.experimental.list_physical_devices('GPU')
+            assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+            _config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
     
 
     def set_silent_mode(self, silent):
